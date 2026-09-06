@@ -111,6 +111,7 @@ React handles the application UI while Phaser handles the interactive 2D world.
 * Asset pipeline defined: Sunnyside pack staged in gitignored `assets/`, curated files committed under `public/assets/`
 * World renders a placeholder; no Sunnyside art on screen yet
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for how the infrastructure fits together.
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for how the infrastructure fits together
+today, and its **Target Architecture** section for the full end-state design.
 
 Next development focus (Phase 1): render the tilemap, then add the player, movement, animations, collision, and camera.

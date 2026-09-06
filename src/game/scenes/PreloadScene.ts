@@ -14,8 +14,24 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   preload() {
-    // Asset loading goes here as files land in public/assets/, e.g.:
-    // this.load.image("tileset", "/assets/tilesets/sunnyside_16px.png");
+    // Sunnyside 16px world tileset — a single 1024×1024 atlas (64×64 tiles).
+    this.load.image(
+      "tileset",
+      "/assets/tilesets/spr_tileset_sunnysideworld_16px.png",
+    );
+
+    // Player character — layered Sunnyside human, "base" body for now.
+    // Each animation is a horizontal strip of 96×64 frames.
+    this.load.spritesheet(
+      "player-idle",
+      "/assets/characters/human/base_idle_strip9.png",
+      { frameWidth: 96, frameHeight: 64 },
+    );
+    this.load.spritesheet(
+      "player-walk",
+      "/assets/characters/human/base_walk_strip8.png",
+      { frameWidth: 96, frameHeight: 64 },
+    );
   }
 
   create() {

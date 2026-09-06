@@ -19,6 +19,11 @@ export function createGame(parent: HTMLElement): Phaser.Game {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
+    // Top-down world: no gravity. Arcade handles movement and (later) collision.
+    physics: {
+      default: "arcade",
+      arcade: { gravity: { x: 0, y: 0 }, debug: false },
+    },
     // Scenes boot in array order: Preload runs first, then starts World.
     scene: [PreloadScene, WorldScene],
   });

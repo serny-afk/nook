@@ -21,6 +21,13 @@ The world uses the **Sunnyside World** pixel-art pack (16px tileset, layered/str
 
 There is no test runner configured yet.
 
+**The user runs these commands, not Claude.** Claude must not execute `git`
+commands or run scripts like `npm run dev` / `npm run test` (and similar
+long-running or side-effecting commands) itself. Instead, propose the exact
+command and let the user run it — they can use the `! <command>` prefix in the
+prompt so its output lands in the session. Read-only inspection (file reads,
+searches) is fine for Claude to do directly.
+
 ## Architecture
 
 The app is a **React shell hosting a Phaser world**. This split is the core design principle and should be preserved:

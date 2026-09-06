@@ -1,7 +1,9 @@
 # Architecture
 
-How Nook is put together. This documents the *current* infrastructure; the
-product roadmap lives in [PROJECT.md](./PROJECT.md).
+How Nook is put together. Most of this documents the infrastructure that
+**exists today**; the [Target Architecture](#target-architecture-end-state)
+section near the end describes the **end state** we are building toward. The
+product roadmap and phase breakdown live in [PROJECT.md](./PROJECT.md).
 
 ## Stack
 
@@ -61,6 +63,143 @@ strip-based human character, elements). Two locations, two jobs:
 `public/assets/…` → load it by its `/assets/…` URL in `PreloadScene`. This keeps
 the repo and shipped bundle lean. If large first-party source art appears later,
 use Git LFS rather than committing binaries directly.
+
+## Target Architecture (end state)
+
+> **Not built yet.** Everything above documents what exists today (a client-only
+> Phaser world in a React shell). This section is the destination — the shape all
+> the pieces add up to once the deferred backend arrives. It is introduced phase
+> by phase (see [PROJECT.md](./PROJECT.md)), never upfront. SkyOffice is the
+> closest reference: the same Phaser + Colyseus + React shape.
+
+At the end state there are **four runtime pieces** — the browser client, a
+realtime server, an API server, and a database — plus a shared-types package that
+keeps the wire contracts honest across all of them.
+
+```text
+┌───────────────────────────── BROWSER (client) ─────────────────────────────┐
+│  React shell ──── UI · menus · productivity · auth forms · HUD overlays      │
+│     │ ▲                                                                       │
+│     │ │  props / callbacks / events  (the App.tsx bridge)                     │
+│     ▼ │                                                                       │
+│  Phaser world ── tilemap · local player · remote players · collision ·       │
+│     │            camera · animations · interactions                          │
+│     │                                                                         │
+│  ┌──┴──────────────┐              ┌──────────────────────┐                    │
+│  │ Colyseus client │              │ REST client (fetch)  │                    │
+│  │ (WebSocket)     │              │ (HTTP + JWT)         │                    │
+│  └──────┬──────────┘              └───────────┬──────────┘                    │
+└─────────┼─────────────────────────────────────┼─────────────────────────────┘
+          │ realtime state (20–60/s)             │ CRUD (occasional)
+          ▼                                      ▼
+┌────────────────────────┐          ┌──────────────────────────────┐
+│ REALTIME SERVER         │          │ API SERVER                   │
+│ Node + Colyseus         │          │ Node + Express/Fastify       │
+│ · rooms (= spaces)      │          │ · auth (signup/login/JWT)    │
+│ · authoritative state   │          │ · profiles / customization   │
+│ · movement validation   │          │ · tasks / focus history      │
+│ · presence · chat       │          │ · furniture / personal space │
+│ · broadcasts deltas     │          │ · ORM (Sequelize/Prisma)     │
+└──────────┬──────────────┘          └───────────────┬──────────────┘
+           │  durable writes via API/ORM             │
+           └────────────────────┬────────────────────┘
+                                ▼
+                     ┌────────────────────┐
+                     │ PostgreSQL          │
+                     │ users · profiles ·  │
+                     │ customization ·     │
+                     │ furniture · tasks · │
+                     │ focus logs · social │
+                     └────────────────────┘
+
+  (optional, at scale)  Redis ── Colyseus presence/driver across nodes
+  Static assets ──────  served from public/ via CDN
+```
+
+### What each piece owns
+
+- **Browser client** — two sub-layers behind one bridge (the split above,
+  extended). React owns application UI; Phaser owns the world. Two thin
+  networking clients are the *only* things that talk to servers: a **Colyseus
+  client** (WebSocket, live world state) and a **REST client** (HTTP, durable
+  CRUD). React and Phaser go through them, never straight to the network.
+- **Realtime server (Colyseus / Node)** — the live, in-memory brain of a shared
+  space. A **room = one virtual space/zone**, holding *authoritative* state
+  (presence, positions, chat, interaction state) in a Colyseus schema. The
+  client requests a move; the server validates and broadcasts the result
+  (**server authority**). This state is mostly **ephemeral** — anything that must
+  outlive the session is pushed to the database via the API/ORM.
+- **API server (Node + Express/Fastify + ORM)** — the conventional full-stack
+  half: auth, profiles, character customization, saved personal spaces/furniture,
+  productivity data (tasks, focus history), social graph. Classic
+  request → ORM → Postgres → JSON. No realtime here.
+- **PostgreSQL** — durable source of truth for everything that must survive a
+  refresh.
+- **Shared types** — one TypeScript package of message/schema contracts imported
+  by client *and* both servers, so the wire format cannot drift.
+
+### Two flows worth understanding
+
+**Auth → joining a world** (how the two servers cooperate):
+
+```text
+1. Client → API server:  POST /login      → returns a JWT
+2. Client → Colyseus:    joinRoom(token)  → Colyseus verifies the JWT
+3. Colyseus:             adds player to room, begins syncing state
+```
+
+Auth is REST's job; the realtime server just trusts a verified token on join. The
+token is the handoff — the two servers barely need to talk.
+
+**Movement** (the realtime loop, Phase 2):
+
+```text
+Local player presses a key
+  → Phaser moves them immediately  (client-side prediction — feels instant)
+  → sends intent to Colyseus
+  → server validates, updates authoritative state, broadcasts delta
+  → other clients receive the delta, interpolate remote players smoothly
+```
+
+"Game logic runs client-side" and "server authority" aren't a contradiction: the
+client *predicts* for responsiveness, the server *corrects* for truth.
+
+### When each piece comes online
+
+| Phase | Comes online | Boxes above |
+| ----- | ------------ | ----------- |
+| **1 (now)** | World renders & plays locally | Browser only (React + Phaser). No servers. |
+| **2** | Multiplayer | + Colyseus realtime server (+ Redis only past one node) |
+| **3** | Accounts & persistence | + API server + PostgreSQL + ORM |
+| **4** | Productivity | Mostly React UI + API/DB; some room-level state in Colyseus (study rooms) |
+| **5** | Polish / personal spaces | Furniture & customization persisted in DB, placed live via Colyseus |
+
+### Deployment & hosting notes
+
+The three tiers have very different hosting needs:
+
+- **Frontend** — a static bundle. Any CDN/static host (Vercel, Netlify,
+  Cloudflare Pages). Trivial.
+- **API server + PostgreSQL** — a stateless HTTP service plus a managed database.
+  Completely standard; any Node host + managed Postgres (Railway, Render, Fly.io,
+  Supabase, Neon, RDS). Trivial.
+- **Colyseus** — the one with real constraints, because it is **stateful and
+  WebSocket-based**: a client must stay connected to the *specific* process
+  holding its room, over a long-lived connection.
+  - **Will not work on serverless/static platforms** (Vercel, Netlify, plain
+    Cloudflare Workers) — those are short-lived, stateless request models. This is
+    the single biggest gotcha; don't try to deploy the realtime server there.
+  - **Does work, easily, on any "real server" host** that keeps WebSockets alive:
+    [Colyseus Cloud](https://colyseus.io/) (first-party, purpose-built),
+    Fly.io, Railway, Render, or a plain VPS.
+  - **Single node carries this app for a long time.** A cozy, low-tick space
+    needs only modest resources; one small instance handles many concurrent
+    players. Multi-node scaling adds **Redis** (shared presence/matchmaking
+    driver) and **sticky routing** — defer both until traffic actually demands it.
+
+  **Verdict:** hosting Colyseus is not a problem for a solo project — as long as
+  the realtime server goes on a stateful host and *not* the same static/serverless
+  target as the frontend.
 
 ## Commands
 
