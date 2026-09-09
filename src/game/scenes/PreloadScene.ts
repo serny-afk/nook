@@ -1,12 +1,18 @@
 import Phaser from "phaser";
 import { SceneKeys } from "./keys";
+import {
+  FRAME_HEIGHT,
+  FRAME_WIDTH,
+  HUMAN_LAYERS,
+  layerTextureKey,
+} from "../objects/characterConfig";
 
 /**
  * Loads every asset the game needs, then hands off to the world.
  *
  * All `this.load.*` calls belong here so there is a single, predictable point
- * where assets enter the game. Nothing is loaded yet — art is brought in
- * incrementally (tileset, then player) in later Phase 1 steps.
+ * where assets enter the game: the world tileset, the Tiled map, and the
+ * layered human character spritesheets.
  */
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -20,18 +26,18 @@ export class PreloadScene extends Phaser.Scene {
       "/assets/tilesets/spr_tileset_sunnysideworld_16px.png",
     );
 
-    // Player character — layered Sunnyside human, "base" body for now.
-    // Each animation is a horizontal strip of 96×64 frames.
-    this.load.spritesheet(
-      "player-idle",
-      "/assets/characters/human/base_idle_strip9.png",
-      { frameWidth: 96, frameHeight: 64 },
-    );
-    this.load.spritesheet(
-      "player-walk",
-      "/assets/characters/human/base_walk_strip8.png",
-      { frameWidth: 96, frameHeight: 64 },
-    );
+    // World map authored in Tiled and exported as JSON. Its embedded tileset
+    // ("sunnyside") is backed by the "tileset" atlas loaded above.
+    this.load.tilemapTiledJSON("world", "/assets/maps/world.tmj");
+
+    // Layered Sunnyside human: each configured layer (base body, hair, …) is a
+    // horizontal strip of 96×64 frames, loaded as "<layer>-idle"/"<layer>-walk"
+    // so a character can be composed by stacking layers (see Character).
+    const frame = { frameWidth: FRAME_WIDTH, frameHeight: FRAME_HEIGHT };
+    for (const [layer, def] of Object.entries(HUMAN_LAYERS)) {
+      this.load.spritesheet(layerTextureKey(layer, "idle"), def.idle, frame);
+      this.load.spritesheet(layerTextureKey(layer, "walk"), def.walk, frame);
+    }
   }
 
   create() {

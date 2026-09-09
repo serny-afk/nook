@@ -69,7 +69,6 @@ React handles the application UI while Phaser handles the interactive 2D world.
 * Animations
 * Collision
 * Camera
-* Basic interactions
 
 ### Phase 2 — Multiplayer
 
@@ -78,6 +77,7 @@ React handles the application UI while Phaser handles the interactive 2D world.
 * Shared state
 * Server authority
 * Reconnection/interpolation
+* Basic interactions (deferred from Phase 1)
 
 ### Phase 3 — Persistence
 
@@ -105,13 +105,42 @@ React handles the application UI while Phaser handles the interactive 2D world.
 ## Current State
 
 * GitHub repo: `nook`
-* React + TypeScript + Vite configured
-* Phaser installed; React ↔ Phaser integration working
-* Scene architecture in place: `game.ts` (config) → `PreloadScene` → `WorldScene`
-* Asset pipeline defined: Sunnyside pack staged in gitignored `assets/`, curated files committed under `public/assets/`
-* World renders a placeholder; no Sunnyside art on screen yet
+* React + TypeScript + Vite configured; React ↔ Phaser integration working
+* Scene architecture: `game.ts` (config) → `PreloadScene` → `WorldScene`
+* Asset pipeline: Sunnyside pack staged in gitignored `assets/`, curated files committed under `public/assets/`
+* Canvas fills the browser and is responsive (Phaser `Scale.RESIZE`)
+* World loads a map authored in Tiled (`public/assets/maps/world.tmj`), larger than the viewport, with a `ground` layer and an `obstacles` layer
+* Collision: player collides with the obstacles layer (rocks)
+* Camera follows the player with a soft lerp and a center deadzone, bounded to the map
+* Player built from stacked Sunnyside layers (base body + hair), composed via an `Appearance` model; movement input is a separate module (keyboard now, ready for network-driven remote players)
+
+Phase 1 (Core World) is essentially complete.
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for how the infrastructure fits together
 today, and its **Target Architecture** section for the full end-state design.
 
-Next development focus (Phase 1): render the tilemap, then add the player, movement, animations, collision, and camera.
+## Short-term TODO
+
+Phase 1 (Core World) is complete: Tiled map + loader, fullscreen/responsive
+canvas, collision, camera feel, and a layered, customizable character (with
+movement input already extracted for future network-driven players).
+
+**MVP target:** Phase 1 + a thin slice of Phase 2 (a few players in a shared
+room, client-authoritative movement relayed by the server) + lightweight account
+persistence. Real OAuth is deferred; the backend is introduced once, when the
+world is solid — multiplayer and persistence then share it.
+
+Next up (Phase 2 — Multiplayer):
+
+1. **Colyseus server** — introduce the Node/Colyseus backend and a room.
+2. **Shared movement** — broadcast each client's position, spawn and interpolate
+   remote players (reusing `Character` with a network-driven driver instead of
+   keyboard).
+3. **Join / leave / reconnection** — handle players entering, leaving, dropping.
+4. **Basic interactions** — deferred here from Phase 1.
+
+Deferred polish (no blocker; revisit when relevant):
+
+* A real, hand-authored Tiled map to replace the placeholder `world.tmj`.
+* Depth / y-sorting so the player draws behind tall objects like rocks.
+* More hairstyles + a tools layer, then the Phase 5 customization UI/persistence.

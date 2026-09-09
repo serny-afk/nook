@@ -14,7 +14,7 @@ function App() {
     };
   }, []);
 
-  return <div ref={gameContainer} />;
+  return <div ref={gameContainer} className="game-container" />;
 }
 
 export default App;

@@ -10,14 +10,17 @@ export function createGame(parent: HTMLElement): Phaser.Game {
   return new Phaser.Game({
     type: Phaser.AUTO,
     parent,
-    width: 800,
-    height: 600,
+    // Start at the current viewport size; RESIZE then keeps the canvas matched
+    // to its parent (the full-viewport .game-container) as the window changes.
+    width: window.innerWidth,
+    height: window.innerHeight,
     backgroundColor: "#1a1a2e",
     // Pixel-art assets must not be smoothed when scaled.
     pixelArt: true,
+    // RESIZE keeps the canvas matched to its parent; it fills the box, so no
+    // centering/letterboxing is involved.
     scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
+      mode: Phaser.Scale.RESIZE,
     },
     // Top-down world: no gravity. Arcade handles movement and (later) collision.
     physics: {
