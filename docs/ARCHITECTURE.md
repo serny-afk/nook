@@ -13,6 +13,26 @@ product roadmap and phase breakdown live in [PROJECT.md](./PROJECT.md).
 | 2D world| Phaser 4                      |
 | Backend | Deferred (Node · Colyseus · PostgreSQL, added when a phase needs it) |
 
+## Repository layout
+
+The repo is an **npm workspaces monorepo**. Each runtime piece is a package under
+`packages/`, so the pieces the [target architecture](#target-architecture-end-state)
+describes each get a home as they come online:
+
+```
+nook/
+├── package.json          workspace root (scripts delegate to packages)
+├── tsconfig.json         solution file referencing each package
+├── docs/                 this doc + PROJECT.md
+└── packages/
+    ├── client/           browser app — React shell + Phaser world (exists today)
+    ├── server/           Colyseus realtime server            (Phase 2)
+    └── shared/           wire-contract types, imported by both (Phase 2)
+```
+
+Only `packages/client` exists so far; `server` and `shared` arrive with
+multiplayer. Paths below like `src/game/…` are relative to `packages/client`.
+
 ## The core split: React shell hosts a Phaser world
 
 React and Phaser own separate concerns and this boundary is deliberate:
@@ -32,7 +52,7 @@ across the boundary through explicit interfaces (props/callbacks or Phaser
 events), never by reaching into Phaser internals from React or touching the DOM
 from Phaser.
 
-## Game structure (`src/game/`)
+## Game structure (`packages/client/src/game/`)
 
 ```
 src/game/
@@ -53,11 +73,12 @@ the single place asset `this.load.*` calls belong. Rendering uses
 The world art is the **Sunnyside World** pixel-art pack (16px tileset, layered
 strip-based human character, elements). Two locations, two jobs:
 
-- **`assets/` — gitignored.** Raw source pack; local staging only. Never served
-  or committed. Keep the original download backed up outside the repo.
-- **`public/assets/` — committed.** Only the curated subset the game uses. Vite
-  serves `public/` at the web root, so `public/assets/tilesets/foo.png` loads in
-  Phaser by the URL `/assets/tilesets/foo.png`.
+- **`assets/` (repo root) — gitignored.** Raw source pack; local staging only.
+  Never served or committed. Keep the original download backed up outside the repo.
+- **`packages/client/public/assets/` — committed.** Only the curated subset the
+  game uses. Vite serves the client's `public/` at the web root, so
+  `packages/client/public/assets/tilesets/foo.png` loads in Phaser by the URL
+  `/assets/tilesets/foo.png`.
 
 **Adding art:** find it in `assets/` → copy that one file into
 `public/assets/…` → load it by its `/assets/…` URL in `PreloadScene`. This keeps

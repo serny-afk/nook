@@ -12,7 +12,26 @@ Work **incrementally**: prefer small, self-contained, well-scoped changes over l
 
 The world uses the **Sunnyside World** pixel-art pack (16px tileset, layered/strip-based human character, elements). See the Assets section below for how assets are sourced and committed.
 
+## Repository layout
+
+The repo is an **npm workspaces monorepo** rooted at the top level. Each runtime
+piece is its own package under `packages/`:
+
+- **`packages/client`** — the browser app (React shell + Phaser world). This is
+  what exists today; everything that used to sit at the repo root now lives here.
+- **`packages/server`** — the Colyseus realtime server (introduced in Phase 2).
+- **`packages/shared`** — TypeScript wire-contract types imported by both client
+  and server so the message format cannot drift.
+
+Unqualified source paths in this doc (`src/game/…`, `public/assets/…`) are
+**relative to `packages/client`** unless a package is named. Root-level files
+(`docs/`, `CLAUDE.md`, the workspace `package.json`) stay at the top.
+
 ## Commands
+
+Run from the repo root; the root scripts delegate to the relevant workspace.
+
+
 
 - `npm run dev` — start the Vite dev server with HMR
 - `npm run build` — type-check with `tsc -b` then produce a production build (build fails on type errors)
@@ -47,12 +66,12 @@ The backend (Node.js, Colyseus, PostgreSQL, REST) is intentionally **deferred** 
 
 Two distinct locations, two jobs:
 
-- **`assets/` (gitignored)** — the raw Sunnyside source pack; local staging only, never served or committed. Keep the original download backed up outside the repo, since git does not track it.
-- **`public/assets/` (committed)** — only the curated subset the game actually uses. Vite serves `public/` at the web root, so a file at `public/assets/tilesets/foo.png` loads in Phaser by the URL `/assets/tilesets/foo.png`.
+- **`assets/` (gitignored, at the repo root)** — the raw Sunnyside source pack; local staging only, never served or committed. Keep the original download backed up outside the repo, since git does not track it.
+- **`packages/client/public/assets/` (committed)** — only the curated subset the game actually uses. Vite serves the client's `public/` at the web root, so a file at `packages/client/public/assets/tilesets/foo.png` loads in Phaser by the URL `/assets/tilesets/foo.png`.
 
 Workflow to add art: find it in `assets/` → copy that one file into `public/assets/...` → load it by its `/assets/...` URL in `PreloadScene`. This keeps the repo and the shipped bundle lean and makes "what art is in the game" explicit. Do not commit the raw pack or point the loader at `assets/`. If large first-party source art appears later, reach for Git LFS rather than committing binaries directly.
 
 ## Notes
 
 - `README.md` is still the default Vite template and is not an accurate source of project info — use `docs/PROJECT.md`.
-- TypeScript uses project references: `tsconfig.json` composes `tsconfig.app.json` (app code under `src/`) and `tsconfig.node.json` (Vite/build tooling).
+- TypeScript uses project references. The root `tsconfig.json` is a solution file referencing each package; inside `packages/client`, `tsconfig.json` composes `tsconfig.app.json` (app code under `src/`) and `tsconfig.node.json` (Vite/build tooling).

@@ -12,7 +12,9 @@ dist
 dist-ssr
 *.local
 
-assets/
+# Raw Sunnyside source pack — local staging at the repo root only.
+# Anchored so it never matches the committed packages/client/public/assets.
+/assets/
 
 # Editor directories and files
 .vscode/*
