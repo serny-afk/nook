@@ -7,8 +7,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace @nook/client",
-    "build": "npm run build --workspace @nook/client",
+    "dev": "npm run build --workspace @nook/shared && npm run dev --workspace @nook/client",
+    "dev:server": "npm run build --workspace @nook/shared && npm run dev --workspace @nook/server",
+    "build": "npm run build --workspace @nook/shared && npm run build --workspace @nook/client",
+    "build:server": "npm run build --workspace @nook/server",
     "lint": "npm run lint --workspace @nook/client",
     "preview": "npm run preview --workspace @nook/client"
   }

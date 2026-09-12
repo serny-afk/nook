@@ -9,6 +9,11 @@ import {
 /** Movement speed in pixels/second. */
 const SPEED = 110;
 
+/** Fraction of the remaining gap to a networked target closed each frame. */
+const REMOTE_INTERP = 0.2;
+/** Per-frame movement (px) below which a remote player counts as standing still. */
+const REMOTE_MOVE_EPSILON = 0.5;
+
 /**
  * A composed humanoid character: a base body plus stacked visual layers (hair,
  * later tools) that animate and face as one. The base body carries the physics
@@ -99,6 +104,25 @@ export class Character extends Phaser.Physics.Arcade.Sprite {
     else if (x > 0) this.setFlipX(false);
 
     this.setAnimState(x !== 0 || y !== 0 ? "walk" : "idle");
+  }
+
+  /**
+   * Drive the character toward a networked target position, easing in for
+   * smoothness rather than snapping. Facing comes straight from the snapshot;
+   * walk/idle is inferred from whether it actually moved this frame. This is the
+   * network driver's entry point — the counterpart to {@link move} for remote
+   * players, whose position is authoritative on their own client.
+   */
+  applySnapshot(targetX: number, targetY: number, flipX: boolean) {
+    const nextX = Phaser.Math.Linear(this.x, targetX, REMOTE_INTERP);
+    const nextY = Phaser.Math.Linear(this.y, targetY, REMOTE_INTERP);
+    const moved =
+      Math.abs(nextX - this.x) > REMOTE_MOVE_EPSILON ||
+      Math.abs(nextY - this.y) > REMOTE_MOVE_EPSILON;
+
+    this.setPosition(nextX, nextY);
+    this.setFlipX(flipX);
+    this.setAnimState(moved ? "walk" : "idle");
   }
 
   /** Switches all layers to a new animation state together, once. */

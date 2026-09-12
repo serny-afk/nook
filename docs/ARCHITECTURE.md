@@ -25,13 +25,15 @@ nook/
 ├── tsconfig.json         solution file referencing each package
 ├── docs/                 this doc + PROJECT.md
 └── packages/
-    ├── client/           browser app — React shell + Phaser world (exists today)
+    ├── client/           browser app — React shell + Phaser world
     ├── server/           Colyseus realtime server            (Phase 2)
     └── shared/           wire-contract types, imported by both (Phase 2)
 ```
 
-Only `packages/client` exists so far; `server` and `shared` arrive with
-multiplayer. Paths below like `src/game/…` are relative to `packages/client`.
+All three packages now exist (`server` and `shared` came online with Phase 2
+multiplayer). `shared` splits its contract into two entry points: `@nook/shared`
+(dependency-free `protocol` messages) and `@nook/shared/state` (the Colyseus
+`state` schema). Paths below like `src/game/…` are relative to `packages/client`.
 
 ## The core split: React shell hosts a Phaser world
 
@@ -57,16 +59,26 @@ from Phaser.
 ```
 src/game/
 ├── game.ts              Phaser configuration only — no game logic.
+├── objects/
+│   ├── Character.ts       Composed humanoid: move() (intent-driven, local) and
+│   │                      applySnapshot() (position-driven, remote players).
+│   ├── Player.ts          Local player — a Character wired to keyboard input.
+│   └── characterConfig.ts Appearance model + layer/animation key helpers.
+├── input/
+│   └── KeyboardMovement.ts Reads directional intent from arrows/WASD.
+├── network/
+│   └── NetworkClient.ts   Colyseus connection: joins the room, relays the local
+│                          position, surfaces remote players to the scene.
 └── scenes/
     ├── keys.ts          SceneKeys constant (typo-proof scene references).
     ├── PreloadScene.ts  Loads all assets, then starts the world.
-    └── WorldScene.ts    The actual 2D world (grows through Phase 1).
+    └── WorldScene.ts    The actual 2D world: map, local + remote players, camera.
 ```
 
 Scenes boot in array order (`game.ts`): **Preload → World**. `PreloadScene` is
 the single place asset `this.load.*` calls belong. Rendering uses
 `pixelArt: true` so the pixel-art tiles stay crisp when scaled, with
-`Scale.FIT` + centering.
+`Scale.RESIZE` so the canvas fills its parent (the full-viewport container).
 
 ## Assets
 
@@ -87,11 +99,14 @@ use Git LFS rather than committing binaries directly.
 
 ## Target Architecture (end state)
 
-> **Not built yet.** Everything above documents what exists today (a client-only
-> Phaser world in a React shell). This section is the destination — the shape all
-> the pieces add up to once the deferred backend arrives. It is introduced phase
-> by phase (see [PROJECT.md](./PROJECT.md)), never upfront. SkyOffice is the
-> closest reference: the same Phaser + Colyseus + React shape.
+> **Mostly not built yet.** The realtime server (Colyseus) has come online with
+> Phase 2, but the API server, database, and server-authoritative movement below
+> are still ahead. Today's multiplayer is client-authoritative (each client
+> relays its own resolved position); the server validation / prediction +
+> correction described here is the destination, not the current behavior. This
+> section is introduced phase by phase (see [PROJECT.md](./PROJECT.md)), never
+> upfront. SkyOffice is the closest reference: the same Phaser + Colyseus + React
+> shape.
 
 At the end state there are **four runtime pieces** — the browser client, a
 realtime server, an API server, and a database — plus a shared-types package that

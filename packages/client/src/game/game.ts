@@ -1,13 +1,21 @@
 import Phaser from "phaser";
 import { PreloadScene } from "./scenes/PreloadScene";
 import { WorldScene } from "./scenes/WorldScene";
+import { CONNECTION_STATUS_KEY, type ConnectionStatus } from "./network/NetworkClient";
 
 /**
  * Creates and returns the Phaser game, mounted into the given DOM element.
  * This module owns configuration only — all game logic lives in the scenes.
+ *
+ * `onConnectionStatus` is the bridge back to React: the world reports its
+ * multiplayer connection state through it (see App.tsx). It's stashed in the
+ * game registry so WorldScene can read it without game.ts knowing any logic.
  */
-export function createGame(parent: HTMLElement): Phaser.Game {
-  return new Phaser.Game({
+export function createGame(
+  parent: HTMLElement,
+  onConnectionStatus?: (status: ConnectionStatus) => void,
+): Phaser.Game {
+  const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
     // Start at the current viewport size; RESIZE then keeps the canvas matched
@@ -30,4 +38,10 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     // Scenes boot in array order: Preload runs first, then starts World.
     scene: [PreloadScene, WorldScene],
   });
+
+  if (onConnectionStatus) {
+    game.registry.set(CONNECTION_STATUS_KEY, onConnectionStatus);
+  }
+
+  return game;
 }

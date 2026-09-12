@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.claude/
 
 # Raw Sunnyside source pack — local staging at the repo root only.
 # Anchored so it never matches the committed packages/client/public/assets.

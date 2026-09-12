@@ -114,7 +114,14 @@ React handles the application UI while Phaser handles the interactive 2D world.
 * Camera follows the player with a soft lerp and a center deadzone, bounded to the map
 * Player built from stacked Sunnyside layers (base body + hair), composed via an `Appearance` model; movement input is a separate module (keyboard now, ready for network-driven remote players)
 
-Phase 1 (Core World) is essentially complete.
+Phase 1 (Core World) is complete, and Phase 2 (Multiplayer) is underway:
+
+* Monorepo now has all three packages: `client`, `server` (Colyseus), `shared`
+  (wire contract — `protocol` messages + `state` schema, imported by both sides)
+* A Colyseus `world` room tracks each player's position; the client joins on load
+  and streams its resolved position (client-authoritative, relayed by the server)
+* Remote players are mirrored as `Character`s driven by `applySnapshot`
+  (interpolated), spawned/removed as players join and leave the room
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for how the infrastructure fits together
 today, and its **Target Architecture** section for the full end-state design.
@@ -130,14 +137,17 @@ room, client-authoritative movement relayed by the server) + lightweight account
 persistence. Real OAuth is deferred; the backend is introduced once, when the
 world is solid — multiplayer and persistence then share it.
 
-Next up (Phase 2 — Multiplayer):
+Phase 2 — Multiplayer, progress:
 
-1. **Colyseus server** — introduce the Node/Colyseus backend and a room.
-2. **Shared movement** — broadcast each client's position, spawn and interpolate
+1. ~~**Colyseus server** — introduce the Node/Colyseus backend and a room.~~ Done.
+2. ~~**Shared movement** — broadcast each client's position, spawn and interpolate
    remote players (reusing `Character` with a network-driven driver instead of
-   keyboard).
-3. **Join / leave / reconnection** — handle players entering, leaving, dropping.
-4. **Basic interactions** — deferred here from Phase 1.
+   keyboard).~~ Done (client-authoritative position relay + `applySnapshot`).
+3. ~~**Join / leave / reconnection** — handle players entering, leaving,
+   dropping.~~ Done: seamless reconnection (server holds a dropped slot ~20s;
+   client auto-retries with backoff) and connection state surfaced to the user
+   via a status pill in the React shell (connecting / reconnecting / offline).
+4. **Basic interactions** — deferred here from Phase 1. Still to do.
 
 Deferred polish (no blocker; revisit when relevant):
 

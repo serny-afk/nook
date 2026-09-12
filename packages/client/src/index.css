@@ -67,11 +67,57 @@ body {
   width: 100%;
 }
 
+/* Root of the React shell: a full-viewport stage the Phaser canvas fills, with
+   UI overlays (e.g. connection status) positioned on top. */
+.app-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 /* Container the Phaser game mounts into; RESIZE scale mode matches the canvas
    to this box, which fills the full viewport. */
 .game-container {
   width: 100%;
   height: 100%;
+}
+
+/* Unobtrusive connection-status pill, top-right. Only shown while not fully
+   connected (connecting / reconnecting / offline). */
+.connection-status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  user-select: none;
+}
+
+.connection-status::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 50%;
+  vertical-align: middle;
+  background: currentColor;
+}
+
+/* Amber while working on it, red once given up. */
+.connection-status--connecting,
+.connection-status--reconnecting {
+  color: #fbbf24;
+}
+
+.connection-status--offline {
+  color: #f87171;
 }
 
 h1,
