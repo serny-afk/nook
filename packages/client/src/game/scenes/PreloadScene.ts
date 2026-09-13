@@ -30,6 +30,13 @@ export class PreloadScene extends Phaser.Scene {
     // ("sunnyside") is backed by the "tileset" atlas loaded above.
     this.load.tilemapTiledJSON("world", "/assets/maps/world.tmj");
 
+    // A gently swaying pine — a landmark and the first interactable. Four sway
+    // frames laid out as a horizontal 28×43 strip.
+    this.load.spritesheet("tree", "/assets/elements/spr_deco_tree_02_strip4.png", {
+      frameWidth: 28,
+      frameHeight: 43,
+    });
+
     // Layered Sunnyside human: each configured layer (base body, hair, …) is a
     // horizontal strip of 96×64 frames, loaded as "<layer>-idle"/"<layer>-walk"
     // so a character can be composed by stacking layers (see Character).

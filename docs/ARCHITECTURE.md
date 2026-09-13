@@ -66,6 +66,11 @@ src/game/
 │   └── characterConfig.ts Appearance model + layer/animation key helpers.
 ├── input/
 │   └── KeyboardMovement.ts Reads directional intent from arrows/WASD.
+├── interaction/
+│   ├── Interactable.ts     A world point the player can act on (data only).
+│   ├── InteractionManager.ts Proximity + "press E" prompt + interact key; fires
+│   │                       the active interactable's action.
+│   └── bridge.ts           Interaction-panel contract surfaced to the React shell.
 ├── network/
 │   └── NetworkClient.ts   Colyseus connection: joins the room, relays the local
 │                          position, surfaces remote players to the scene.

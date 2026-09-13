@@ -122,6 +122,10 @@ Phase 1 (Core World) is complete, and Phase 2 (Multiplayer) is underway:
   and streams its resolved position (client-authoritative, relayed by the server)
 * Remote players are mirrored as `Character`s driven by `applySnapshot`
   (interpolated), spawned/removed as players join and leave the room
+* A data-driven interaction system: interactables carry a world anchor, radius,
+  prompt, and action; the nearest in-range one shows a floating "press E" prompt
+  and fires on the interact key. The first opens a React overlay via the same
+  registry bridge as connection status
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for how the infrastructure fits together
 today, and its **Target Architecture** section for the full end-state design.
@@ -147,10 +151,16 @@ Phase 2 — Multiplayer, progress:
    dropping.~~ Done: seamless reconnection (server holds a dropped slot ~20s;
    client auto-retries with backoff) and connection state surfaced to the user
    via a status pill in the React shell (connecting / reconnecting / offline).
-4. **Basic interactions** — deferred here from Phase 1. Still to do.
+4. ~~**Basic interactions** — deferred here from Phase 1.~~ Done: a data-driven
+   interaction system (proximity detection + a floating "press E" prompt + an
+   interact key) drives interactables — plain objects with a world anchor,
+   radius, prompt, and action. The first is a landmark pine that opens a React
+   panel, exercising the React↔Phaser bridge end to end and setting the pattern
+   future productivity "stations" reuse.
 
 Deferred polish (no blocker; revisit when relevant):
 
 * A real, hand-authored Tiled map to replace the placeholder `world.tmj`.
-* Depth / y-sorting so the player draws behind tall objects like rocks.
+* Depth / y-sorting: characters now sort by their feet (so they pass behind the
+  pine); extending this to the tilemap's tall props (e.g. rocks) is still open.
 * More hairstyles + a tools layer, then the Phase 5 customization UI/persistence.

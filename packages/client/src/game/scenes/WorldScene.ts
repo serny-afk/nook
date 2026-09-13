@@ -9,6 +9,11 @@ import {
   type ConnectionStatus,
 } from "../network/NetworkClient";
 import type { PlayerState } from "@nook/shared/state";
+import { InteractionManager } from "../interaction/InteractionManager";
+import {
+  INTERACTION_PANEL_KEY,
+  type InteractionPanel,
+} from "../interaction/bridge";
 
 /** Last position reported to the server, used to skip redundant sends. */
 interface SentState {
@@ -40,6 +45,7 @@ const REMOTE_APPEARANCE: Appearance = { hair: "longhair" };
 export class WorldScene extends Phaser.Scene {
   private player!: Player;
   private network!: NetworkClient;
+  private interactions!: InteractionManager;
   /** Last position sent, so we only transmit when something actually changed. */
   private lastSent: SentState = { x: NaN, y: NaN, flipX: false };
   /** Remote players currently in the room, keyed by Colyseus session id. */
@@ -80,6 +86,46 @@ export class WorldScene extends Phaser.Scene {
       (camera.height / camera.zoom) * 0.3,
     );
 
+    // A gently swaying pine: a cozy landmark and the first interactable. It has
+    // no collision, so the player can walk behind it (depth-sorted below) or up
+    // to it to read. Origin at its base so it sits on the ground and sorts by
+    // that point against the feet-sorted characters.
+    if (!this.anims.exists("tree-sway")) {
+      this.anims.create({
+        key: "tree-sway",
+        frames: this.anims.generateFrameNumbers("tree", {}),
+        frameRate: 6,
+        repeat: -1,
+      });
+    }
+    const treeX = map.widthInPixels / 2;
+    const treeY = map.heightInPixels / 2 - 72;
+    this.add
+      .sprite(treeX, treeY, "tree")
+      .setOrigin(0.5, 1)
+      .setDepth(treeY)
+      .play("tree-sway");
+
+    // Wire the interaction system: the nearest in-range interactable shows a
+    // prompt and, on the interact key, runs its action. This one opens a React
+    // panel through the same registry bridge as connection status.
+    const showPanel = this.registry.get(INTERACTION_PANEL_KEY) as
+      | ((panel: InteractionPanel | null) => void)
+      | undefined;
+    this.interactions = new InteractionManager(this);
+    this.interactions.add({
+      x: treeX,
+      y: treeY,
+      radius: 44,
+      prompt: "Read",
+      promptOffsetY: 52,
+      onInteract: () =>
+        showPanel?.({
+          title: "A quiet pine",
+          body: "A good place to catch your breath. This is where Nook's interactions begin — more to do here soon.",
+        }),
+    });
+
     // Join the shared world room. Best-effort: if the server is down the world
     // still runs single-player. Always tear down when the scene stops (including
     // React/StrictMode teardown) so connections and sprites aren't leaked.
@@ -94,12 +140,16 @@ export class WorldScene extends Phaser.Scene {
         onReset: () => this.clearRemotePlayers(),
       })
       .catch((err) => console.warn("[nook] running offline (no server):", err));
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.teardownNetwork());
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.teardownNetwork();
+      this.interactions.destroy();
+    });
   }
 
   update() {
     this.player.update();
     this.reportPosition();
+    this.interactions.update(this.player.x, this.player.y);
 
     // Ease each remote player toward its latest server position.
     for (const { character, state } of this.remotePlayers.values()) {

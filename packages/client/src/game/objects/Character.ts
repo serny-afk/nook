@@ -9,6 +9,13 @@ import {
 /** Movement speed in pixels/second. */
 const SPEED = 110;
 
+/**
+ * Distance (px) from the sprite's centre down to its feet. Characters sort by
+ * their feet so they pass behind props whose base is higher up the screen and
+ * in front of those below — see {@link Character.preUpdate}.
+ */
+const FEET_OFFSET = 8;
+
 /** Fraction of the remaining gap to a networked target closed each frame. */
 const REMOTE_INTERP = 0.2;
 /** Per-frame movement (px) below which a remote player counts as standing still. */
@@ -70,6 +77,17 @@ export class Character extends Phaser.Physics.Arcade.Sprite {
       scene.events.off(Phaser.Scenes.Events.POST_UPDATE, this.syncOverlays, this);
       this.overlays.forEach((overlay) => overlay.destroy());
     });
+  }
+
+  /**
+   * Depth-sort by the feet each frame so characters draw behind props higher up
+   * the screen and in front of those lower down (basic y-sorting). Overlays
+   * inherit this depth in {@link syncOverlays}. Runs automatically for every
+   * Character, local or remote. `super.preUpdate` must still advance animations.
+   */
+  preUpdate(time: number, delta: number) {
+    super.preUpdate(time, delta);
+    this.setDepth(this.y + FEET_OFFSET);
   }
 
   /** Registers idle/walk animations for each layer once; safe to repeat. */
