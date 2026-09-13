@@ -1,0 +1,19 @@
+# Local Postgres for development. Start it with `npm run db:up` (from this
+# package) or `docker compose up -d`, and stop it with `npm run db:down`.
+# Data persists in the named volume across restarts.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nook-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nook
+      POSTGRES_PASSWORD: nook
+      POSTGRES_DB: nook
+    ports:
+      - "5432:5432"
+    volumes:
+      - nook-pgdata:/var/lib/postgresql/data
+
+volumes:
+  nook-pgdata:

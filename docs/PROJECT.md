@@ -114,10 +114,12 @@ React handles the application UI while Phaser handles the interactive 2D world.
 * Camera follows the player with a soft lerp and a center deadzone, bounded to the map
 * Player built from stacked Sunnyside layers (base body + hair), composed via an `Appearance` model; movement input is a separate module (keyboard now, ready for network-driven remote players)
 
-Phase 1 (Core World) is complete, and Phase 2 (Multiplayer) is underway:
+Phases 1 (Core World) and 2 (Multiplayer) are complete; Phase 3 (Persistence)
+has begun:
 
-* Monorepo now has all three packages: `client`, `server` (Colyseus), `shared`
-  (wire contract — `protocol` messages + `state` schema, imported by both sides)
+* Monorepo has four packages: `client`, `server` (Colyseus realtime), `shared`
+  (wire contract — `protocol` messages + `state` schema, imported by both sides),
+  and `api` (the REST/persistence tier, new — see Phase 3 progress below)
 * A Colyseus `world` room tracks each player's position; the client joins on load
   and streams its resolved position (client-authoritative, relayed by the server)
 * Remote players are mirrored as `Character`s driven by `applySnapshot`
@@ -157,6 +159,31 @@ Phase 2 — Multiplayer, progress:
    radius, prompt, and action. The first is a landmark pine that opens a React
    panel, exercising the React↔Phaser bridge end to end and setting the pattern
    future productivity "stations" reuse.
+
+Phase 3 — Persistence, progress:
+
+1. **Custom API foundation** — a new `packages/api` (Express + Sequelize +
+   Postgres, TypeScript, layered: `server` → `app` → routes → services →
+   models). Scaffolded so far: typed config, JSON logger, Sequelize connection,
+   an app factory with a DB-pinging `/health`, graceful shutdown, and a
+   Dockerized Postgres (`docker-compose.yml`). **Status: written, not yet
+   installed / run / verified / committed.** See `packages/api/README.md` to run
+   it.
+2. **Profile resource** — a `Profile` model + migration + service + routes
+   (display name + appearance), proving route → service → model → Postgres end
+   to end. *Next up.*
+3. **Auth + validation** — signup/login, hashed passwords, JWT, and request
+   validation (Zod, shared via `@nook/shared`). *Deferred to its own milestone.*
+4. **Client wiring** — a REST client, session handling, an onboarding UI, and
+   loading the persisted appearance into the world.
+5. **Realtime handoff** — Colyseus verifies the JWT on join; name/appearance
+   added to `PlayerState` so other players see them (retires the hardcoded
+   `REMOTE_APPEARANCE`).
+
+Decision on record: we build this tier ourselves (custom API + Postgres) rather
+than a BaaS like Supabase — the project is held to production standards and
+building the backend is an explicit goal. Supabase/Neon as *managed Postgres*
+stays a drop-in option (it's just a different `DATABASE_URL`).
 
 Deferred polish (no blocker; revisit when relevant):
 

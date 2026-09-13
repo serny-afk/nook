@@ -26,12 +26,15 @@ nook/
 ├── docs/                 this doc + PROJECT.md
 └── packages/
     ├── client/           browser app — React shell + Phaser world
-    ├── server/           Colyseus realtime server            (Phase 2)
-    └── shared/           wire-contract types, imported by both (Phase 2)
+    ├── server/           Colyseus realtime server              (Phase 2)
+    ├── api/              REST API — Express + Sequelize + Postgres (Phase 3)
+    └── shared/           wire-contract types, imported by both  (Phase 2)
 ```
 
-All three packages now exist (`server` and `shared` came online with Phase 2
-multiplayer). `shared` splits its contract into two entry points: `@nook/shared`
+All four packages now exist: `server` and `shared` came online with Phase 2
+(multiplayer), and `api` — the REST/persistence tier (Express + Sequelize +
+Postgres) — with Phase 3 (see PROJECT.md for its progress). `shared` splits its
+contract into two entry points: `@nook/shared`
 (dependency-free `protocol` messages) and `@nook/shared/state` (the Colyseus
 `state` schema). Paths below like `src/game/…` are relative to `packages/client`.
 
@@ -104,9 +107,10 @@ use Git LFS rather than committing binaries directly.
 
 ## Target Architecture (end state)
 
-> **Mostly not built yet.** The realtime server (Colyseus) has come online with
-> Phase 2, but the API server, database, and server-authoritative movement below
-> are still ahead. Today's multiplayer is client-authoritative (each client
+> **Partly built.** The realtime server (Colyseus) came online with Phase 2, and
+> the API server + database are now being built in Phase 3 (in progress —
+> Express + Sequelize + Postgres; see PROJECT.md). Server-authoritative movement
+> below is still ahead. Today's multiplayer is client-authoritative (each client
 > relays its own resolved position); the server validation / prediction +
 > correction described here is the destination, not the current behavior. This
 > section is introduced phase by phase (see [PROJECT.md](./PROJECT.md)), never
@@ -170,10 +174,12 @@ keeps the wire contracts honest across all of them.
   client requests a move; the server validates and broadcasts the result
   (**server authority**). This state is mostly **ephemeral** — anything that must
   outlive the session is pushed to the database via the API/ORM.
-- **API server (Node + Express/Fastify + ORM)** — the conventional full-stack
-  half: auth, profiles, character customization, saved personal spaces/furniture,
-  productivity data (tasks, focus history), social graph. Classic
-  request → ORM → Postgres → JSON. No realtime here.
+- **API server (Node + Express + Sequelize + Postgres)** — the conventional
+  full-stack half: auth, profiles, character customization, saved personal
+  spaces/furniture, productivity data (tasks, focus history), social graph.
+  Classic request → service → model → Postgres → JSON. No realtime here. Stack
+  chosen in Phase 3 (see PROJECT.md); layered as `server` → `app` → routes →
+  services → models.
 - **PostgreSQL** — durable source of truth for everything that must survive a
   refresh.
 - **Shared types** — one TypeScript package of message/schema contracts imported
