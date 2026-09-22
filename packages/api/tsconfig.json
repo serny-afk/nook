@@ -21,5 +21,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
+  "references": [{ "path": "../shared" }],
   "include": ["src"]
 }

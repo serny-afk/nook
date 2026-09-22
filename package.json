@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "npm run build --workspace @nook/shared && npm run dev --workspace @nook/client",
     "dev:server": "npm run build --workspace @nook/shared && npm run dev --workspace @nook/server",
-    "dev:api": "npm run dev --workspace @nook/api",
+    "dev:api": "npm run build --workspace @nook/shared && npm run dev --workspace @nook/api",
+    "db:migrate": "npm run db:migrate --workspace @nook/api",
     "build": "npm run build --workspace @nook/shared && npm run build --workspace @nook/client",
     "build:server": "npm run build --workspace @nook/server",
     "build:api": "npm run build --workspace @nook/api",

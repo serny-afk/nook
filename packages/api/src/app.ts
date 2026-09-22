@@ -3,6 +3,7 @@ import cors from "cors";
 import { config } from "./config/index.js";
 import { assertDatabaseConnection } from "./db/sequelize.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { profilesRouter } from "./routes/profiles.js";
 
 /**
  * Builds the Express application: middleware, routes, and the error handler.
@@ -22,7 +23,8 @@ export function createApp(): Express {
     res.json({ status: "ok", db: "connected" });
   });
 
-  // Feature routes mount here (profiles, auth, …).
+  // Feature routes mount here (auth, … next).
+  app.use("/profiles", profilesRouter);
 
   // Must be last: catches errors from every handler above.
   app.use(errorHandler);

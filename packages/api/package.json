@@ -10,15 +10,20 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "db:up": "docker compose up -d",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "db:migrate": "tsx src/db/migrate.ts up",
+    "db:migrate:undo": "tsx src/db/migrate.ts down",
+    "db:migrate:status": "tsx src/db/migrate.ts pending"
   },
   "dependencies": {
+    "@nook/shared": "*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "pg": "^8.13.1",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.5"
+    "sequelize": "^6.37.5",
+    "umzug": "^3.8.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

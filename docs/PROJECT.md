@@ -164,14 +164,22 @@ Phase 3 — Persistence, progress:
 
 1. **Custom API foundation** — a new `packages/api` (Express + Sequelize +
    Postgres, TypeScript, layered: `server` → `app` → routes → services →
-   models). Scaffolded so far: typed config, JSON logger, Sequelize connection,
-   an app factory with a DB-pinging `/health`, graceful shutdown, and a
-   Dockerized Postgres (`docker-compose.yml`). **Status: written, not yet
-   installed / run / verified / committed.** See `packages/api/README.md` to run
-   it.
+   models). Built: typed config, JSON logger, Sequelize connection, an app
+   factory with a DB-pinging `/health`, graceful shutdown, and a Dockerized
+   Postgres (`docker-compose.yml`, kept as an option). **Status: done —
+   installed, running, and verified** (`/health` returns
+   `{"status":"ok","db":"connected"}`). Dev runs against a **native local
+   Postgres 16** (Docker is not used); production will use managed Postgres, a
+   drop-in `DATABASE_URL` swap. See `packages/api/README.md` to run it.
 2. **Profile resource** — a `Profile` model + migration + service + routes
    (display name + appearance), proving route → service → model → Postgres end
-   to end. *Next up.*
+   to end. **Done:** `profiles` table via an Umzug migration (`npm run
+   db:migrate`); `GET`/`POST`/`PATCH /profiles` through a thin route → service →
+   Sequelize model layering; an app-owned `ApiError` (+ `badRequest`/`notFound`)
+   the central handler maps to status codes. `Appearance` now lives in
+   `@nook/shared` (single source of truth; the client re-exports it) so persisted
+   and rendered appearance can't drift. Deep validation (Zod) and a
+   machine-readable error `code` are deferred to their own milestone.
 3. **Auth + validation** — signup/login, hashed passwords, JWT, and request
    validation (Zod, shared via `@nook/shared`). *Deferred to its own milestone.*
 4. **Client wiring** — a REST client, session handling, an onboarding UI, and

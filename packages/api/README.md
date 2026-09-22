@@ -67,12 +67,16 @@ Stop Postgres with `npm run db:down` (data persists in the `nook-pgdata` volume)
 | `npm run build`    | `tsc -b` type-check + emit to `dist/`            |
 | `npm run start`    | run the built server from `dist/`                |
 | `npm run test`     | run Vitest                                       |
-| `npm run db:up`    | start the Dockerized Postgres                    |
+| `npm run db:up`    | start the Dockerized Postgres (optional)         |
 | `npm run db:down`  | stop it                                          |
+| `npm run db:migrate` | apply pending migrations                       |
+| `npm run db:migrate:undo` | roll back the last migration              |
+| `npm run db:migrate:status` | list migrations not yet applied         |
 
 ## Status
 
-Foundation only: a typed Express server that connects to Postgres and serves
-`/health`. **Next:** a `Profile` model + migration + service + routes. Auth and
-request validation are deferred to their own milestone. See `docs/PROJECT.md`
-(Phase 3 progress) for the full plan.
+A typed Express server on Postgres serving `/health`, plus the first resource:
+**profiles** (`GET`/`POST`/`PATCH /profiles`) through route → service → Sequelize
+model, with a versioned Umzug migration for the `profiles` table. **Next:** auth
++ request validation (Zod), then client wiring. See `docs/PROJECT.md` (Phase 3
+progress) for the full plan.

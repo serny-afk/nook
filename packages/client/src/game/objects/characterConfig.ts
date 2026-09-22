@@ -7,6 +7,13 @@
  * swapping hair or adding a tools layer is just a change to the layer list.
  */
 
+import { HAIR_OPTIONS, type Hair, type Appearance } from "@nook/shared";
+
+// The character's data shape (Appearance/Hair) is shared with the server-side
+// persistence tier; re-exported here so the game code keeps a single import for
+// everything about a character. This module owns only the asset/layer mapping.
+export { HAIR_OPTIONS, type Hair, type Appearance };
+
 export type AnimState = "idle" | "walk";
 
 /** Every human layer strip shares this frame size. */
@@ -47,21 +54,6 @@ export const HUMAN_LAYERS: Record<string, CharacterLayerDef> = {
 
 /** The base body layer, always present beneath any appearance. */
 const BASE_LAYER = "base";
-
-/** Selectable hairstyles; each value is a layer key in HUMAN_LAYERS. */
-export const HAIR_OPTIONS = ["shorthair", "longhair"] as const;
-export type Hair = (typeof HAIR_OPTIONS)[number];
-
-/**
- * A character's chosen appearance — the customizable selection that resolves to
- * a stack of layers. This is the model a customization UI and persistence will
- * eventually read/write; it can grow (hair colour, outfit, tools) without
- * touching Character, which only ever sees the resolved layer list.
- */
-export interface Appearance {
-  /** Chosen hairstyle, or omitted for none (bald). */
-  hair?: Hair;
-}
 
 /** Resolves an appearance into the ordered, bottom-first layer list that a
  *  Character composes. */
