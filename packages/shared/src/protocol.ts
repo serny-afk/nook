@@ -7,8 +7,20 @@
  * messages and the identifiers both sides must agree on.
  */
 
+import type { Appearance } from "./appearance.js";
+
 /** Colyseus room the server registers and the client joins. */
 export const ROOM_NAME = "world";
+
+/**
+ * What the client sends when joining the world room, so the server can stamp the
+ * player's identity onto their synced state (see PlayerState). Position stays
+ * client-authoritative and is reported separately via {@link MoveMessage}.
+ */
+export interface JoinOptions {
+  name: string;
+  appearance: Appearance;
+}
 
 /**
  * Message types sent from client to server. Values are the on-the-wire keys, so

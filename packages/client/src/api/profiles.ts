@@ -10,9 +10,12 @@ import { env } from "../config/env";
 
 /** An API request that reached the server but returned a non-2xx status. */
 export class ApiError extends Error {
-  constructor(readonly status: number, message: string) {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
     super(message);
     this.name = "ApiError";
+    this.status = status;
   }
 }
 

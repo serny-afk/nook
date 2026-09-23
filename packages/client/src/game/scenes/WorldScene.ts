@@ -2,7 +2,11 @@ import Phaser from "phaser";
 import { SceneKeys } from "./keys";
 import { Player } from "../objects/Player";
 import { Character } from "../objects/Character";
-import { appearanceToLayers, type Appearance } from "../objects/characterConfig";
+import {
+  appearanceToLayers,
+  type Appearance,
+  type Hair,
+} from "../objects/characterConfig";
 import {
   NetworkClient,
   CONNECTION_STATUS_KEY,
@@ -31,9 +35,6 @@ interface RemotePlayer {
   character: Character;
   state: PlayerState;
 }
-
-/** Look for remote players until per-player appearance is synced (Phase 5). */
-const REMOTE_APPEARANCE: Appearance = { hair: "longhair" };
 
 /**
  * The interactive 2D world — tilemap, player, movement, collision, camera,
@@ -146,11 +147,17 @@ export class WorldScene extends Phaser.Scene {
       | undefined;
     this.network = new NetworkClient(onStatus);
     this.network
-      .connect({
-        onAdd: (id, state) => this.spawnRemotePlayer(id, state),
-        onRemove: (id) => this.despawnRemotePlayer(id),
-        onReset: () => this.clearRemotePlayers(),
-      })
+      .connect(
+        {
+          onAdd: (id, state) => this.spawnRemotePlayer(id, state),
+          onRemove: (id) => this.despawnRemotePlayer(id),
+          onReset: () => this.clearRemotePlayers(),
+        },
+        {
+          name: localPlayer?.displayName ?? "Guest",
+          appearance: localPlayer?.appearance ?? {},
+        },
+      )
       .catch((err) => console.warn("[nook] running offline (no server):", err));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.teardownNetwork();
@@ -181,15 +188,22 @@ export class WorldScene extends Phaser.Scene {
     this.network.sendMove({ x, y, flipX });
   }
 
-  /** Draw a newly joined remote player at its current server position. */
+  /** Draw a newly joined remote player at its current server position, with the
+   *  name and appearance they joined with (synced in their PlayerState). */
   private spawnRemotePlayer(sessionId: string, state: PlayerState) {
     // Guard against a stale duplicate (e.g. if a slot is re-added).
     this.despawnRemotePlayer(sessionId);
+    // The synced appearance mirrors the plain Appearance shape; an empty hair
+    // string means "no hair" (see AppearanceState).
+    const appearance: Appearance = state.appearance.hair
+      ? { hair: state.appearance.hair as Hair }
+      : {};
     const character = new Character(
       this,
       state.x,
       state.y,
-      appearanceToLayers(REMOTE_APPEARANCE),
+      appearanceToLayers(appearance),
+      state.name,
     );
     this.remotePlayers.set(sessionId, { character, state });
   }

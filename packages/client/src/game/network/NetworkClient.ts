@@ -1,5 +1,10 @@
 import { Client, getStateCallbacks, type Room } from "colyseus.js";
-import { ClientMessages, ROOM_NAME, type MoveMessage } from "@nook/shared";
+import {
+  ClientMessages,
+  ROOM_NAME,
+  type JoinOptions,
+  type MoveMessage,
+} from "@nook/shared";
 import type { PlayerState, WorldState } from "@nook/shared/state";
 import { env } from "../../config/env";
 
@@ -71,14 +76,23 @@ export class NetworkClient {
   }
 
   /**
-   * Join the shared world room and wire up remote-player callbacks. Resolves
-   * once connected; rejects (and reports "offline") if the server is unreachable.
+   * Join the shared world room and wire up remote-player callbacks. The local
+   * player's identity (`joinOptions`) is sent so the server can stamp it onto the
+   * synced state for everyone else. Resolves once connected; rejects (and reports
+   * "offline") if the server is unreachable. Reconnection restores the same slot
+   * via its token, so identity doesn't need re-sending there.
    */
-  async connect(handlers: RemotePlayerHandlers): Promise<void> {
+  async connect(
+    handlers: RemotePlayerHandlers,
+    joinOptions: JoinOptions,
+  ): Promise<void> {
     this.handlers = handlers;
     this.onStatus("connecting");
     try {
-      const room = await this.client.joinOrCreate<WorldState>(ROOM_NAME);
+      const room = await this.client.joinOrCreate<WorldState>(
+        ROOM_NAME,
+        joinOptions,
+      );
       this.bindRoom(room);
     } catch (err) {
       this.onStatus("offline");

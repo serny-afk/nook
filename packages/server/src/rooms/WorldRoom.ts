@@ -1,5 +1,5 @@
 import { Room, type Client } from "colyseus";
-import { ClientMessages, type MoveMessage } from "@nook/shared";
+import { ClientMessages, type JoinOptions, type MoveMessage } from "@nook/shared";
 import { PlayerState, WorldState } from "@nook/shared/state";
 
 /** Where a newly joined player appears. Mirrors WorldScene's map-centre spawn. */
@@ -34,10 +34,15 @@ export class WorldRoom extends Room<WorldState> {
     });
   }
 
-  override onJoin(client: Client) {
+  override onJoin(client: Client, options?: JoinOptions) {
     const player = new PlayerState();
     player.x = SPAWN.x;
     player.y = SPAWN.y;
+    // Identity comes from the client's join options and is relayed unchanged so
+    // everyone else can render who this is. Defaults keep a client that joins
+    // without options (or offline-created) valid rather than rejecting it.
+    player.name = options?.name ?? "Guest";
+    player.appearance.hair = options?.appearance?.hair ?? "";
     this.state.players.set(client.sessionId, player);
     console.log(`[world] ${client.sessionId} joined (${this.clients.length} online)`);
   }

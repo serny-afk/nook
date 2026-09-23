@@ -21,6 +21,11 @@ const REMOTE_INTERP = 0.2;
 /** Per-frame movement (px) below which a remote player counts as standing still. */
 const REMOTE_MOVE_EPSILON = 0.5;
 
+/** Height (px) the name label floats above the character's centre. */
+const LABEL_OFFSET_Y = 22;
+/** Depth for name labels: above every world sprite so they're never occluded. */
+const LABEL_DEPTH = 10000;
+
 /**
  * A composed humanoid character: a base body plus stacked visual layers (hair,
  * later tools) that animate and face as one. The base body carries the physics
@@ -39,8 +44,16 @@ export class Character extends Phaser.Physics.Arcade.Sprite {
   /** Overlay sprites for layers[1..], drawn above the base and synced to it. */
   private readonly overlays: Phaser.GameObjects.Sprite[] = [];
   private animState: AnimState = "idle";
+  /** Floating name label, when the character was given a name (e.g. remotes). */
+  private readonly label?: Phaser.GameObjects.Text;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, layers: string[]) {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    layers: string[],
+    name = "",
+  ) {
     super(scene, x, y, layerTextureKey(layers[0], "idle"));
     this.layers = layers;
 
@@ -68,6 +81,22 @@ export class Character extends Phaser.Physics.Arcade.Sprite {
       overlay.play(layerAnimKey(layers[i + 1], "idle")),
     );
 
+    // Optional name label, positioned above the head each frame in syncOverlays.
+    // Higher resolution keeps the text crisp under the camera's 2.5× zoom (the
+    // game runs in pixelArt mode, which would otherwise render it blocky).
+    if (name) {
+      this.label = scene.add
+        .text(x, y, name, {
+          fontFamily: "system-ui, sans-serif",
+          fontSize: "11px",
+          color: "#ffffff",
+          stroke: "#000000",
+          strokeThickness: 3,
+        })
+        .setOrigin(0.5, 1)
+        .setResolution(3);
+    }
+
     // Sync overlays to the base AFTER physics has moved it for the frame.
     // POST_UPDATE runs after Arcade's world post-update writes the body's final
     // position back to the base; syncing earlier leaves overlays a frame behind
@@ -76,6 +105,7 @@ export class Character extends Phaser.Physics.Arcade.Sprite {
     this.once(Phaser.GameObjects.Events.DESTROY, () => {
       scene.events.off(Phaser.Scenes.Events.POST_UPDATE, this.syncOverlays, this);
       this.overlays.forEach((overlay) => overlay.destroy());
+      this.label?.destroy();
     });
   }
 
@@ -164,5 +194,8 @@ export class Character extends Phaser.Physics.Arcade.Sprite {
       // Force identical frame so a layer can never drift from the base.
       overlay.anims.setProgress(progress);
     }
+    // The label tracks the head but never flips with the body, and always draws
+    // above the world so it can't be hidden behind props or other characters.
+    this.label?.setPosition(this.x, this.y - LABEL_OFFSET_Y).setDepth(LABEL_DEPTH);
   }
 }
