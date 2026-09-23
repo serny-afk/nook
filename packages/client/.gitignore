@@ -1,0 +1,5 @@
+# Local env overrides — never commit build-time URLs. `.env.example` is the
+# committed template; `.env` (and Vite's mode variants) stay local.
+.env
+.env.local
+.env.*.local

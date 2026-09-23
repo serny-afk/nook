@@ -1,9 +1,10 @@
 import { Client, getStateCallbacks, type Room } from "colyseus.js";
 import { ClientMessages, ROOM_NAME, type MoveMessage } from "@nook/shared";
 import type { PlayerState, WorldState } from "@nook/shared/state";
+import { env } from "../../config/env";
 
-/** Default dev server endpoint; overridable for other environments later. */
-const DEFAULT_ENDPOINT = "ws://localhost:2567";
+/** Server endpoint: the deployed URL in prod, localhost in dev (see config/env). */
+const DEFAULT_ENDPOINT = env.serverUrl;
 
 /**
  * Phaser registry key under which the React shell's connection-status callback

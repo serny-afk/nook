@@ -1,21 +1,25 @@
 import Phaser from "phaser";
+import type { Profile } from "@nook/shared";
 import { PreloadScene } from "./scenes/PreloadScene";
 import { WorldScene } from "./scenes/WorldScene";
 import { CONNECTION_STATUS_KEY, type ConnectionStatus } from "./network/NetworkClient";
 import { INTERACTION_PANEL_KEY, type InteractionPanel } from "./interaction/bridge";
+import { LOCAL_PLAYER_KEY, type LocalPlayer } from "./localPlayer";
 
 /**
  * Creates and returns the Phaser game, mounted into the given DOM element.
  * This module owns configuration only — all game logic lives in the scenes.
  *
- * The two callbacks are the bridges back to React, stashed in the game registry
- * so the scenes can reach them without game.ts knowing any logic:
- * `onConnectionStatus` reports multiplayer connection state, and
- * `onInteractionPanel` opens (or closes, with null) an interaction panel. See
- * App.tsx for both.
+ * The game is created only once the player's `profile` is resolved (see App.tsx),
+ * so its name/appearance are available to the world from the first frame. Along
+ * with the profile, two callbacks bridge back to React; all three are stashed in
+ * the game registry so the scenes can reach them without game.ts knowing any
+ * logic: `onConnectionStatus` reports multiplayer connection state, and
+ * `onInteractionPanel` opens (or closes, with null) an interaction panel.
  */
 export function createGame(
   parent: HTMLElement,
+  profile: Profile,
   onConnectionStatus?: (status: ConnectionStatus) => void,
   onInteractionPanel?: (panel: InteractionPanel | null) => void,
 ): Phaser.Game {
@@ -42,6 +46,12 @@ export function createGame(
     // Scenes boot in array order: Preload runs first, then starts World.
     scene: [PreloadScene, WorldScene],
   });
+
+  const localPlayer: LocalPlayer = {
+    displayName: profile.displayName,
+    appearance: profile.appearance,
+  };
+  game.registry.set(LOCAL_PLAYER_KEY, localPlayer);
 
   if (onConnectionStatus) {
     game.registry.set(CONNECTION_STATUS_KEY, onConnectionStatus);

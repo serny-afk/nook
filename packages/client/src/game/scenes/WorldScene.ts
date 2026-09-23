@@ -14,6 +14,7 @@ import {
   INTERACTION_PANEL_KEY,
   type InteractionPanel,
 } from "../interaction/bridge";
+import { LOCAL_PLAYER_KEY, type LocalPlayer } from "../localPlayer";
 
 /** Last position reported to the server, used to skip redundant sends. */
 interface SentState {
@@ -71,7 +72,18 @@ export class WorldScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
-    this.player = new Player(this, map.widthInPixels / 2, map.heightInPixels / 2);
+    // The local player renders with the persisted appearance from the resolved
+    // profile (stashed by game.ts). Player falls back to a default look if none
+    // is present, so the world still runs if identity somehow isn't set.
+    const localPlayer = this.registry.get(LOCAL_PLAYER_KEY) as
+      | LocalPlayer
+      | undefined;
+    this.player = new Player(
+      this,
+      map.widthInPixels / 2,
+      map.heightInPixels / 2,
+      localPlayer?.appearance,
+    );
 
     if (obstacles) this.physics.add.collider(this.player, obstacles);
 
