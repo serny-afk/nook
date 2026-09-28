@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "main": "./dist/server.js",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -b",
@@ -13,7 +16,8 @@
     "db:down": "docker compose down",
     "db:migrate": "tsx src/db/migrate.ts up",
     "db:migrate:undo": "tsx src/db/migrate.ts down",
-    "db:migrate:status": "tsx src/db/migrate.ts pending"
+    "db:migrate:status": "tsx src/db/migrate.ts pending",
+    "db:migrate:prod": "node dist/db/migrate.js up"
   },
   "dependencies": {
     "@nook/shared": "*",

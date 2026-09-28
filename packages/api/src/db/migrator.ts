@@ -24,8 +24,13 @@ export interface MigrationContext {
 // so a raw Windows path would silently match nothing.
 const migrationsDir = resolve(dirname(fileURLToPath(import.meta.url)), "../migrations");
 
+// Match migrations by this module's own extension: `.ts` when run from source
+// via tsx (dev), `.js` when run from compiled dist via node (prod). This keeps
+// one glob correct in both worlds and never matches the emitted `.d.ts` files.
+const ext = import.meta.url.endsWith(".ts") ? "ts" : "js";
+
 export const migrator = new Umzug<MigrationContext>({
-  migrations: { glob: `${migrationsDir.replace(/\\/g, "/")}/*.ts` },
+  migrations: { glob: `${migrationsDir.replace(/\\/g, "/")}/*.${ext}` },
   context: {
     queryInterface: sequelize.getQueryInterface(),
     Sequelize,

@@ -8,6 +8,9 @@ export interface Config {
   nodeEnv: string;
   port: number;
   databaseUrl: string;
+  /** Require TLS to the database — needed by most managed Postgres (Neon, a
+   *  provider's public URL). Off by default for local/private-network Postgres. */
+  dbSsl: boolean;
   clientOrigin: string;
 }
 
@@ -22,5 +25,6 @@ export const config: Config = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: Number(process.env.PORT ?? 4000),
   databaseUrl: required("DATABASE_URL"),
+  dbSsl: (process.env.DATABASE_SSL ?? "false").toLowerCase() === "true",
   clientOrigin: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",
 };

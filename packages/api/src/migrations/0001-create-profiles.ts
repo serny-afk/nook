@@ -1,3 +1,4 @@
+import { DataTypes } from "sequelize";
 import type { Migration } from "../db/migrator.js";
 
 /**
@@ -6,28 +7,28 @@ import type { Migration } from "../db/migrator.js";
  * Appearance, so persistence and the client's character rendering share one
  * shape. Columns are snake_cased to match the model's `underscored` mapping.
  */
-export const up: Migration = async ({ context: { queryInterface, Sequelize } }) => {
+export const up: Migration = async ({ context: { queryInterface } }) => {
   await queryInterface.createTable("profiles", {
     id: {
-      type: Sequelize.UUID,
-      defaultValue: Sequelize.UUIDV4,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
     display_name: {
-      type: Sequelize.STRING(32),
+      type: DataTypes.STRING(32),
       allowNull: false,
     },
     appearance: {
-      type: Sequelize.JSONB,
+      type: DataTypes.JSONB,
       allowNull: false,
       defaultValue: {},
     },
     created_at: {
-      type: Sequelize.DATE,
+      type: DataTypes.DATE,
       allowNull: false,
     },
     updated_at: {
-      type: Sequelize.DATE,
+      type: DataTypes.DATE,
       allowNull: false,
     },
   });

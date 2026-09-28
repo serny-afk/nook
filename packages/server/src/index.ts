@@ -12,4 +12,4 @@ const gameServer = new Server({
 gameServer.define(ROOM_NAME, WorldRoom);
 
 await gameServer.listen(port);
-console.log(`[nook] world server listening on ws://localhost:${port}`);
+console.log(`[nook] world server listening on port ${port}`);

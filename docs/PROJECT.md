@@ -181,12 +181,24 @@ Phase 3 — Persistence, progress:
    and rendered appearance can't drift. Deep validation (Zod) and a
    machine-readable error `code` are deferred to their own milestone.
 3. **Auth + validation** — signup/login, hashed passwords, JWT, and request
-   validation (Zod, shared via `@nook/shared`). *Deferred to its own milestone.*
-4. **Client wiring** — a REST client, session handling, an onboarding UI, and
-   loading the persisted appearance into the world.
-5. **Realtime handoff** — Colyseus verifies the JWT on join; name/appearance
-   added to `PlayerState` so other players see them (retires the hardcoded
-   `REMOTE_APPEARANCE`).
+   validation (Zod, shared via `@nook/shared`). *Deferred to its own milestone
+   (post-launch); the MVP uses password-less identity instead — see below.*
+4. ~~**Client wiring** — a REST client, session handling, an onboarding UI, and
+   loading the persisted appearance into the world.~~ **Done (MVP milestone A):**
+   password-less identity (a `Profile` cached in localStorage, no JWT), a `fetch`
+   REST client against `/profiles`, an onboarding modal (name + hair), and the
+   persisted appearance threaded into the local player. Client URLs are env-driven
+   (`VITE_SERVER_URL` / `VITE_API_URL`, localhost defaults).
+5. ~~**Realtime handoff** — name/appearance added to `PlayerState` so other
+   players see them (retires the hardcoded `REMOTE_APPEARANCE`).~~ **Done (MVP
+   milestone B):** `PlayerState` carries `name` + a nested `AppearanceState`; the
+   client sends them as Colyseus join options; remotes render the real look with a
+   floating name label. (JWT-on-join stays with the deferred auth milestone.)
+
+**Deploy tooling (MVP milestone C):** the app is deployment-ready — migrations
+run from compiled output in production, Node is pinned via `engines`, and managed
+Postgres TLS is supported (`DATABASE_SSL`). See [DEPLOY.md](./DEPLOY.md) for the
+Railway (server + api + Postgres) + Vercel/Cloudflare Pages (client) runbook.
 
 Decision on record: we build this tier ourselves (custom API + Postgres) rather
 than a BaaS like Supabase — the project is held to production standards and
